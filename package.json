@@ -17,7 +17,7 @@
     "@expo/vector-icons": "^15.0.3",
     "@gorhom/bottom-sheet": "^5.2.8",
     "@lottiefiles/dotlottie-react": "^0.18.3",
-    "@loyal-labs/private-transactions": "^0.2.9",
+    "@loyal-labs/private-transactions": "^0.2.10",
     "@loyal-labs/shared": "^0.1.1",
     "@loyal-labs/solana-rpc": "^0.1.1",
     "@magicblock-labs/ephemeral-rollups-sdk": "^0.10.5",
