@@ -10,5 +10,7 @@ module.exports = {
     "^.+\\.tsx?$": "ts-jest",
     "node_modules/@noble/.+\\.js$": "ts-jest",
   },
-  transformIgnorePatterns: ["node_modules/(?!(@noble/ciphers|@noble/hashes)/)"],
+  transformIgnorePatterns: [
+    "node_modules/(?!(@noble/ciphers|@noble/hashes)/)",
+  ],
 };
