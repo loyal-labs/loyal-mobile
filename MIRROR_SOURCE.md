@@ -3,7 +3,7 @@
 This repository is generated from `loyal-labs/loyal-app`.
 
 - Source path: `apps/mobile`
-- Source commit: `9f25870fc1c0be46257eb311157ede7aec43fe59`
-- Generated at: `2026-08-16T13:27:20.596Z`
+- Source commit: `02c3abe82c3f2a9b89d1021d1105210fe76f4356`
+- Generated at: `2026-08-16T17:35:11.523Z`
 
 Do not edit this repository directly. Changes should land in `loyal-app`.
