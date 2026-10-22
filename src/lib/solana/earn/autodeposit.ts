@@ -27,7 +27,7 @@ import {
   updateEarnAutodepositFloor,
 } from "./earn-api";
 import { type EarnAuthPurpose, signEarnAuth, withEarnAuth } from "./earn-auth";
-import { clearEarnSession, getEarnSessionToken } from "./earn-session";
+import { dropRejectedToken, getEarnSessionToken } from "./earn-session";
 import {
   signAndSendPreparedOperation,
   signAndSendPreparedOperations,
@@ -113,15 +113,15 @@ async function withEarnSessionOrAuth<T>(
       ) {
         throw error;
       }
-      await clearEarnSession();
+      await dropRejectedToken(signer.publicKey.toBase58(), sessionToken);
     }
   }
   return call(await signEarnAuth(signer, purpose));
 }
 
 // Deployment inputs for the device-side SDK prepare, resolved from the
-// unauthenticated `/state` read (which also carries the resume metadata of a
-// half-finished setup).
+// bearer-authenticated `/state` read (which also carries the resume metadata
+// of a half-finished setup).
 type AutodepositPrepareContext = {
   cluster: ReturnType<typeof normalizeLoyalCluster>;
   policySigner: PublicKey;

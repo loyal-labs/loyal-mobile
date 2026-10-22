@@ -3,6 +3,7 @@ module.exports = {
   testEnvironment: "node",
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/src/$1",
+    "^(\\.{1,2}/.*)\\.js$": "$1",
     "^expo-seed-vault$": "<rootDir>/modules/expo-seed-vault/src/index",
     "^expo-synced-keychain$": "<rootDir>/modules/expo-synced-keychain/src/index",
     "\\.(png|jpg|jpeg|gif|webp|svg)$": "<rootDir>/test/fileMock.js",

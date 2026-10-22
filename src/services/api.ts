@@ -1,6 +1,79 @@
-import type { ChatSummary, SummariesApiResponse } from "@loyal-labs/shared";
+import type { MobileEarnMaxResponses } from "@loyal-labs/shared";
+import type {
+  Get,
+  MobileTokenDetailResponse,
+  MobileTrustedDapp,
+  Summary,
+} from "@loyal-labs/api";
+
+import { earnHeaders } from "@/lib/solana/earn/earn-session";
 
 import { env } from "@/config/env";
+import { fetchWithTimeout } from "@/lib/network/fetch-with-timeout";
+import {
+  EarnApiError,
+  type EarnAuthFields,
+  type EarnSessionAuth,
+} from "@/lib/solana/earn/earn-api";
+
+export async function fetchEarnMaxApy(): Promise<number | null> {
+  const response = await fetchWithTimeout(
+    `${env.apiBaseUrl}/api/earn-max/apy`,
+    { headers: earnHeaders() }
+  );
+  if (!response.ok) throw new Error("Earn MAX APY is unavailable.");
+  const payload = await response.json();
+  return typeof payload.apyBps === "number" && Number.isFinite(payload.apyBps)
+    ? payload.apyBps
+    : null;
+}
+
+/** Public on-chain display data, like the ordinary Earn state/earnings reads. */
+export async function fetchMobileEarnMax<A extends "summary" | "activity">(
+  action: A, walletAddress: string
+): Promise<MobileEarnMaxResponses[A]> {
+  const response = await fetchWithTimeout(
+    `${env.apiBaseUrl}/api/smart-accounts/mobile/earn-max?action=${action}&walletAddress=${encodeURIComponent(walletAddress)}`,
+    { headers: earnHeaders() }
+  );
+  const payload = await response.json().catch(() => null);
+  if (!response.ok || !payload) throw new EarnApiError(
+    payload?.error?.message ?? "Unable to update Earn MAX. Please try again.",
+    payload?.error?.code ?? "earn_max_unavailable", response.status
+  );
+  return payload as MobileEarnMaxResponses[A];
+}
+
+export async function requestEarnMax<A extends keyof MobileEarnMaxResponses>(
+  action: A,
+  auth: EarnAuthFields | EarnSessionAuth | { walletAddress: string }
+): Promise<MobileEarnMaxResponses[A]> {
+  const session = "sessionToken" in auth;
+  const response = await fetchWithTimeout(
+    `${env.apiBaseUrl}/api/smart-accounts/mobile/earn-max`,
+    {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        ...earnHeaders(),
+        ...(session ? { Authorization: `Bearer ${auth.sessionToken}` } : {}),
+      },
+      body: JSON.stringify({
+        ...(!session ? auth : {}),
+        action,
+      }),
+    }
+  );
+  const payload = await response.json().catch(() => null);
+  if (!payload || !response.ok) {
+    throw new EarnApiError(
+      payload?.error?.message ?? "Earn MAX is temporarily unavailable. Please try again later.",
+      payload?.error?.code ?? "earn_max_unavailable",
+      response.status
+    );
+  }
+  return payload as MobileEarnMaxResponses[A];
+}
 
 export type GroupChat = {
   id: string;
@@ -14,57 +87,17 @@ export type GroupChat = {
 
 export type TokenDetailTimeframe = "1d" | "1w" | "1m" | "1y";
 
-export type MobileTokenDetailResponse = {
-  mint: string;
-  token: {
-    decimals: number | null;
-    logoUrl: string | null;
-    name: string | null;
-    symbol: string | null;
-  };
-  links: {
-    website: string | null;
-    twitter: string | null;
-    explorer: string | null;
-    discord: string | null;
-    telegram: string | null;
-  };
-  market: {
-    fdvUsd: number | null;
-    holderCount: number | null;
-    liquidityUsd: number | null;
-    marketCapUsd: number | null;
-    priceChange24hPercent: number | null;
-    priceUsd: number | null;
-    updatedAt: string | null;
-    volume24hUsd: number | null;
-  };
-  info: {
-    description: string | null;
-    gtScore: number | null;
-    gtVerified: boolean;
-    mintAuthority: string | null;
-    freezeAuthority: string | null;
-    holderDistribution: {
-      top10: string;
-      rest: string;
-    } | null;
-  };
-  chart: Array<{
-    timestamp: number;
-    priceUsd: number;
-  }>;
-};
+export type { MobileTokenDetailResponse } from "@loyal-labs/api";
 
 /**
  * Fetch all summaries from the API.
  */
-export async function fetchSummaries(): Promise<ChatSummary[]> {
+export async function fetchSummaries(): Promise<Summary[]> {
   const response = await fetch(`${env.apiBaseUrl}/api/summaries`);
   if (!response.ok) {
     throw new Error(`Failed to fetch summaries: ${response.status}`);
   }
-  const data: SummariesApiResponse = await response.json();
+  const data: Get["/api/summaries"] = await response.json();
   return data.summaries;
 }
 
@@ -73,23 +106,27 @@ export async function fetchSummaries(): Promise<ChatSummary[]> {
  */
 export async function fetchSummariesByGroup(
   groupChatId: string,
-): Promise<ChatSummary[]> {
+): Promise<Summary[]> {
   const response = await fetch(
-    `${env.apiBaseUrl}/api/summaries?groupChatId=${encodeURIComponent(groupChatId)}`,
+    `${env.apiBaseUrl}/api/summaries?groupChatId=${encodeURIComponent(
+      groupChatId
+    )}`
   );
   if (!response.ok) {
     throw new Error(`Failed to fetch summaries: ${response.status}`);
   }
-  const data: SummariesApiResponse = await response.json();
+  const data: Get["/api/summaries"] = await response.json();
   return data.summaries;
 }
 
 export async function fetchTokenDetailMarket(
   mint: string,
-  timeframe: TokenDetailTimeframe = "1d",
+  timeframe: TokenDetailTimeframe = "1d"
 ): Promise<MobileTokenDetailResponse> {
   const response = await fetch(
-    `${env.apiBaseUrl}/api/mobile/tokens/${encodeURIComponent(mint)}?timeframe=${timeframe}`,
+    `${env.apiBaseUrl}/api/mobile/tokens/${encodeURIComponent(
+      mint
+    )}?timeframe=${timeframe}`
   );
 
   if (!response.ok) {
@@ -99,62 +136,25 @@ export async function fetchTokenDetailMarket(
   return response.json();
 }
 
-export type RemoteTrustedDapp = {
-  id: string;
-  origin: string;
-  name: string;
-  startUrl: string;
-  category: string | null;
-  displayOrder: number;
-};
-
-export type TrustedDappsResponse = {
-  dapps: RemoteTrustedDapp[];
-};
-
-export async function fetchTrustedDapps(): Promise<RemoteTrustedDapp[]> {
+export async function fetchTrustedDapps(): Promise<MobileTrustedDapp[]> {
   const response = await fetch(`${env.apiBaseUrl}/api/mobile/dapps`);
 
   if (!response.ok) {
     throw new Error(`Failed to fetch trusted dapps: ${response.status}`);
   }
 
-  const data = (await response.json()) as TrustedDappsResponse;
+  const data: Get["/api/mobile/dapps"] = await response.json();
   return data.dapps;
 }
 
-export type RemoteLibraryArticle = {
-  id: string;
-  sectionId: string;
-  title: string;
-  coverImageUrl: string;
-  contentMarkdown: string;
-  excerpt: string | null;
-  isFeatured: boolean;
-  displayOrder: number;
-  publishedAt: string | null;
-};
-
-export type RemoteLibrarySection = {
-  id: string;
-  title: string;
-  displayOrder: number;
-  articles: RemoteLibraryArticle[];
-};
-
-export type LibraryResponse = {
-  featured: RemoteLibraryArticle[];
-  sections: RemoteLibrarySection[];
-};
-
-export async function fetchLibrary(): Promise<LibraryResponse> {
+export async function fetchLibrary(): Promise<Get["/api/mobile/library"]> {
   const response = await fetch(`${env.apiBaseUrl}/api/mobile/library`);
 
   if (!response.ok) {
     throw new Error(`Failed to fetch library: ${response.status}`);
   }
 
-  return (await response.json()) as LibraryResponse;
+  return response.json();
 }
 
 /**
@@ -162,7 +162,7 @@ export async function fetchLibrary(): Promise<LibraryResponse> {
  * Keeps the most recent summary per group (input assumed sorted newest-first from API).
  */
 export function transformSummariesToGroups(
-  summaries: ChatSummary[],
+  summaries: Summary[],
 ): GroupChat[] {
   const groupMap = new Map<string, GroupChat>();
 
