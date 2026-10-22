@@ -3,7 +3,7 @@
 This repository is generated from `loyal-labs/loyal-yield-routing`.
 
 - Source path: `web/apps/mobile`
-- Source commit: `4abea579873329ca6a681c7690c34f893a6b1f58`
-- Generated at: `2026-10-22T22:48:23.631Z`
+- Source commit: `36a8514d5aa98b6fb7fde7f3502461ede55f8238`
+- Generated at: `2026-10-22T22:50:53.677Z`
 
 Do not edit this repository directly. Changes should land in `loyal-yield-routing/web`.
