@@ -7,11 +7,11 @@
       "@/*": [
         "./src/*"
       ],
+      "expo-hardware-key": [
+        "./modules/expo-hardware-key/src/index.ts"
+      ],
       "expo-seed-vault": [
         "./modules/expo-seed-vault/src/index.ts"
-      ],
-      "expo-synced-keychain": [
-        "./modules/expo-synced-keychain/src/index.ts"
       ]
     }
   },
